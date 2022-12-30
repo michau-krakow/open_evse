@@ -235,6 +235,9 @@ extern AutoCurrentCapacityController g_ACCController;
 #define DEFAULT_LCD_BKL_TYPE BKL_TYPE_RGB
 //#define DEFAULT_LCD_BKL_TYPE BKL_TYPE_MONO
 
+// Waveshare LCD1602 with RBG backlight
+#define I2CLCD_WAVESHARE
+
 // Adafruit LCD backpack in I2C mode (MCP23008)
 //#define I2CLCD
 
@@ -348,12 +351,12 @@ extern AutoCurrentCapacityController g_ACCController;
 #define DEFAULT_LCD_BKL_TYPE BKL_TYPE_MONO
 #endif
 
-#if defined(RGBLCD) || defined(I2CLCD)
+#if defined(RGBLCD) || defined(I2CLCD) || defined(I2CLCD_WAVESHARE)
 #define LCD16X2
 //If LCD is not defined, undef BTN_MENU - requires LCD
 #else
 #undef BTN_MENU
-#endif // RGBLCD || I2CLCD
+#endif // RGBLCD || I2CLCD || I2CLCD_WAVESHARE
 
 #if defined(OPENEVSE_2) && !defined(ADVPWR)
 #error INVALID CONFIG - OPENEVSE_2 implies/requires ADVPWR
@@ -638,6 +641,10 @@ extern AutoCurrentCapacityController g_ACCController;
 #define GFI_RETRY_COUNT  6
 #endif // GFI_TESTING
 
+#ifdef I2CLCD_WAVESHARE
+#include "Waveshare_LCD1602_RGB.h"
+#endif
+
 // for RGBLCD
 #define RED 0x1
 #define YELLOW 0x3
@@ -855,6 +862,9 @@ class OnboardDisplay
 #ifdef GREEN_LED_REG
   DigitalPin pinGreenLed;
 #endif
+#ifdef I2CLCD_WAVESHARE
+  Waveshare_LCD1602_RGB m_Lcd;
+#endif
 #if defined(RGBLCD) || defined(I2CLCD)
 #ifdef I2CLCD_PCF8574
   LiquidCrystal_I2C m_Lcd;
@@ -886,6 +896,10 @@ public:
   }
 #ifdef LCD16X2
   void LcdBegin(int x,int y) {
+#ifdef I2CLCD_WAVESHARE
+    m_Lcd.init();
+    m_Lcd.setColorWhite();
+#endif
 #ifdef I2CLCD
 #ifndef I2CLCD_PCF8574
     m_Lcd.setMCPType(LTI_TYPE_MCP23008);
@@ -899,7 +913,11 @@ public:
 #endif // I2CLCD
   }
   void LcdPrint(const char *s) {
+#ifdef I2CLCD_WAVESHARE
+    m_Lcd.send_string(s);
+#else
     m_Lcd.print(s);
+#endif
   }
   void LcdPrint_P(PGM_P s);
   void LcdPrint(int y,const char *s);
@@ -942,6 +960,19 @@ public:
 #endif // RGBLCD
   }
   void LcdSetBacklightColor(uint8_t c) {
+#ifdef I2CLCD_WAVESHARE
+  switch (c)
+  {
+  case RED: m_Lcd.setRGB(255, 0, 0); break;
+  case GREEN: m_Lcd.setRGB(0, 255, 0); break;
+  case BLUE: m_Lcd.setRGB(0, 0, 255); break;
+  case YELLOW: m_Lcd.setRGB(255, 255, 0); break;
+  case TEAL: m_Lcd.setRGB(0, 128, 128); break;
+  case VIOLET: m_Lcd.setRGB(148, 0, 211); break;
+  case WHITE: m_Lcd.setRGB(255, 255, 255); break;
+  default:  m_Lcd.setColorWhite(); break;
+  }
+#endif
 #ifdef RGBLCD
     if (IsLcdBacklightMono()) {
       if (c) c = WHITE;

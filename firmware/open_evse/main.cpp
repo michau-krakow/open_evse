@@ -355,6 +355,9 @@ void TempMonitor::Read()
 
 
 OnboardDisplay::OnboardDisplay()
+#ifdef I2CLCD_WAVESHARE
+  : m_Lcd(16, 2)    // //16 characters x 2 lines
+#endif
 #if defined(I2CLCD) || defined(RGBLCD)
 #ifdef I2CLCD_PCF8574
 // Set the pins on the I2C chip used for LCD connections:
@@ -630,7 +633,7 @@ void OnboardDisplay::Update(int8_t updmode)
     case EVSE_STATE_C: // charging
       SetGreenLed(0);
       SetRedLed(0);
-#ifdef LCD16X2 //Adafruit RGB LCD
+#ifdef LCD16X2
       LcdSetBacklightColor(TEAL);
       LcdClear();
       LcdSetCursor(0,0);
