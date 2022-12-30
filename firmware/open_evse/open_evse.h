@@ -327,10 +327,6 @@ extern AutoCurrentCapacityController g_ACCController;
 // for stability testing - shorter timeout/higher retry count
 //#define GFI_TESTING
 
-// phase and frequency correct PWM 1/8000 resolution
-// when not defined, use fast PWM -> 1/250 resolution
-#define PAFC_PWM
-
 // glynhudson reports that LCD gets corrupted by EMC testing during CE
 // certification.. redraw display periodically when enabled
 //#define PERIODIC_LCD_REFRESH_MS 120000UL
@@ -505,10 +501,19 @@ extern AutoCurrentCapacityController g_ACCController;
 //#define GREEN_LED_IDX 5
 #endif // OPENEVSE_2
 
-// N.B. if PAFC_PWM is enabled, then pilot pin can be PB1 or PB2
-// if using fast PWM (PAFC_PWM disabled) pilot pin *MUST* be PB2
-#define PILOT_REG &PINB
-#define PILOT_IDX 2
+// Select one of the 16-bit timers to drive PILOT signal:
+// - timer needs to be 16 bit wide (timer 1 or 3)
+// - select Output Compare unit for given timer (unit A, B, or C)
+// - make sure REG and PIN coresponds to correct OCnx output
+// enable phase and frequency correct PWM mode on given timer (1/8000 resolution)
+// when not defined, use fast PWM mode -> 1/250 resolution
+#define PAFC_PWM
+// see microcontroller datasheet for details.
+#define PILOT_TIMER_ID    1
+#define PILOT_OC_CHANNEL  'B'
+#define PILOT_DDR         DDRB
+#define PILOT_REG         &PINB
+#define PILOT_PWM_PIN     2
 
 #ifdef MENNEKES_LOCK
 // requires external 12V H-bridge driver such as Polulu 1451

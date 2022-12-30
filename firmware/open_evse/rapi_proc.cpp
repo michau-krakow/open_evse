@@ -589,7 +589,7 @@ int EvseRapiProcessor::processCmd()
     case '0': // get EV connect state
       {
 	uint8_t connstate;
-	if (g_EvseController.GetPilot()->GetState() == PILOT_STATE_N12) {
+	if (g_EvseController.GetPilot()->GetState() == PILOT_STATE::N12) {
 	  connstate = 2; // unknown
 	}
 	else {

@@ -19,7 +19,7 @@
  * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
  * Boston, MA 02111-1307, USA.
  */
-
+#include "J1772Pilot.h"
 
 // EVSE states for m_EvseState
 #define EVSE_STATE_UNKNOWN 0x00
