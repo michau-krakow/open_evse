@@ -35,9 +35,7 @@ extern const char g_psSvcLevel[] PROGMEM;
 extern const char g_psMaxCurrent[] PROGMEM;
 extern const char g_psDiodeCheck[] PROGMEM;
 extern const char g_psVentReqChk[] PROGMEM;
-#ifdef RGBLCD
 extern const char g_psBklType[] PROGMEM;
-#endif
 #ifdef ADVPWR
 extern const char g_psGndChk[] PROGMEM;
 extern const char g_psRlyChk[] PROGMEM;
@@ -76,9 +74,7 @@ extern const char g_psChargeLimit[] PROGMEM;
 #ifdef TIME_LIMIT
 extern const char g_psTimeLimit[] PROGMEM;
 #endif // TIME_LIMIT
-#ifdef RGBLCD
 extern const char *g_BklMenuItems[];
-#endif // RGBLCD
 #endif // BTN_MENU
 
 #ifdef LCD16X2

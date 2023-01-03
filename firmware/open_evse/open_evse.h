@@ -226,29 +226,20 @@ extern AutoCurrentCapacityController g_ACCController;
 
 #endif //AMMETER
 
-//Adafruit RGBLCD (MCP23017) - can have RGB or monochrome backlight
-#define RGBLCD
-
-//select default LCD backlight mode. can be overridden w/CLI/RAPI
-#define BKL_TYPE_MONO 0
-#define BKL_TYPE_RGB  1
-#define DEFAULT_LCD_BKL_TYPE BKL_TYPE_RGB
-//#define DEFAULT_LCD_BKL_TYPE BKL_TYPE_MONO
-
-// Waveshare LCD1602 with RBG backlight
-#define I2CLCD_WAVESHARE
-
-// Adafruit LCD backpack in I2C mode (MCP23008)
-//#define I2CLCD
-
+// select dispaly type
+// #define I2CLCD_Adafruit_RGB
+// #define I2CLCD_Adafruit_Mono
 // Support PCF8574* based I2C backpack using F. Malpartida's library
 // https://bitbucket.org/fmalpartida/new-liquidcrystal/downloads
-// *requires* I2CLCD enabled and RGBLCD disabled
-//#define I2CLCD_PCF8574
-#ifdef I2CLCD_PCF8574
-#define I2CLCD
-#undef RGBLCD
-#endif // I2CLCD_PCF8574
+// #define I2CLCD_PCF8574
+#define I2CLCD_WAVESHARE    // Waveshare LCD1602 with RBG backlight
+
+#if defined(I2CLCD_Adafruit_RGB) || defined(I2CLCD_Adafruit_Mono) || defined(I2CLCD_PCF8574) || defined(I2CLCD_WAVESHARE)
+#define LCD16X2
+//If LCD is not defined, undef BTN_MENU - requires LCD
+#else
+#undef BTN_MENU
+#endif
 
 // Advanced Powersupply... Ground check, stuck relay, L1/L2 detection.
 #define ADVPWR
@@ -271,9 +262,7 @@ extern AutoCurrentCapacityController g_ACCController;
 
 #ifdef BTN_MENU
 // use Adafruit RGB LCD select button
-#ifdef RGBLCD
 #define ADAFRUIT_BTN
-#endif // RGBLCD
 #endif // BTN_MENU
 
 // Option for RTC and DelayTime
@@ -348,15 +337,8 @@ extern AutoCurrentCapacityController g_ACCController;
 //-- end features
 
 #ifndef DEFAULT_LCD_BKL_TYPE
-#define DEFAULT_LCD_BKL_TYPE BKL_TYPE_MONO
+#define DEFAULT_LCD_BKL_TYPE BackliteType::MONO
 #endif
-
-#if defined(RGBLCD) || defined(I2CLCD) || defined(I2CLCD_WAVESHARE)
-#define LCD16X2
-//If LCD is not defined, undef BTN_MENU - requires LCD
-#else
-#undef BTN_MENU
-#endif // RGBLCD || I2CLCD || I2CLCD_WAVESHARE
 
 #if defined(OPENEVSE_2) && !defined(ADVPWR)
 #error INVALID CONFIG - OPENEVSE_2 implies/requires ADVPWR
@@ -641,37 +623,6 @@ extern AutoCurrentCapacityController g_ACCController;
 #define GFI_RETRY_COUNT  6
 #endif // GFI_TESTING
 
-#ifdef I2CLCD_WAVESHARE
-#include "Waveshare_LCD1602_RGB.h"
-#endif
-
-// for RGBLCD
-#define RED 0x1
-#define YELLOW 0x3
-#define GREEN 0x2
-#define BLUE 0x4
-#define TEAL 0x6
-#define VIOLET 0x5
-#define WHITE 0x7
-
-#if defined(RGBLCD) || defined(I2CLCD)
-// Using LiquidTWI2 for both types of I2C LCD's
-// see http://blog.lincomatic.com/?p=956 for installation instructions
-#include "./Wire.h"
-#ifdef I2CLCD_PCF8574
-#include "./LiquidCrystal_I2C.h"
-#define LCD_I2C_ADDR 0x27
-#else
-#ifdef RGBLCD
-#define MCP23017 // Adafruit RGB LCD (PANELOLU2 is now supported without additional define)
-#else
-#define MCP23008 // Adafruit I2C Backpack
-#endif
-#include "./LiquidTWI2.h"
-#define LCD_I2C_ADDR 0x20 // for adafruit shield or backpack
-#endif // I2CLCD_PCF8574
-#endif // RGBLCD || I2CLCD
-
 // button sensing pin
 #define BTN_REG &PINC
 #define BTN_IDX 3
@@ -845,161 +796,11 @@ typedef union union4b {
 #define WDT_ENABLE()
 #endif // WATCHDOG
 
-// OnboardDisplay.m_bFlags
-#define OBDF_MONO_BACKLIGHT 0x01
-#define OBDF_AMMETER_DIRTY  0x80
-#define OBDF_UPDATE_DISABLED 0x40
-
-// OnboardDisplay::Update()
 #define OBD_UPD_NORMAL    0
 #define OBD_UPD_FORCE     1 // update even if no state transition
 #define OBD_UPD_HARDFAULT 2 // update w/ hard fault
-class OnboardDisplay
-{
-#ifdef RED_LED_REG
-  DigitalPin pinRedLed;
-#endif
-#ifdef GREEN_LED_REG
-  DigitalPin pinGreenLed;
-#endif
-#ifdef I2CLCD_WAVESHARE
-  Waveshare_LCD1602_RGB m_Lcd;
-#endif
-#if defined(RGBLCD) || defined(I2CLCD)
-#ifdef I2CLCD_PCF8574
-  LiquidCrystal_I2C m_Lcd;
-#else
-  LiquidTWI2 m_Lcd;
-#endif // I2CLCD_PCF8574
-#endif // defined(RGBLCD) || defined(I2CLCD)
-  uint8_t m_bFlags;
-  char m_strBuf[LCD_MAX_CHARS_PER_LINE+1];
-  unsigned long m_LastUpdateMs;
 
-  int8_t updateDisabled() { return  m_bFlags & OBDF_UPDATE_DISABLED; }
-
-  void MakeChar(uint8_t n, PGM_P bytes);
-public:
-  OnboardDisplay();
-  void Init();
-
-  void SetGreenLed(uint8_t state) {
-#ifdef GREEN_LED_REG
-    pinGreenLed.write(state);
-#endif
-  }
-
-  void SetRedLed(uint8_t state) {
-#ifdef RED_LED_REG
-  pinRedLed.write(state);
-#endif
-  }
-#ifdef LCD16X2
-  void LcdBegin(int x,int y) {
-#ifdef I2CLCD_WAVESHARE
-    m_Lcd.init();
-    m_Lcd.setColorWhite();
-#endif
-#ifdef I2CLCD
-#ifndef I2CLCD_PCF8574
-    m_Lcd.setMCPType(LTI_TYPE_MCP23008);
-#endif
-    m_Lcd.begin(x,y);
-    m_Lcd.setBacklight(HIGH);
-#elif defined(RGBLCD)
-    m_Lcd.setMCPType(LTI_TYPE_MCP23017);
-    m_Lcd.begin(x,y,2);
-    m_Lcd.setBacklight(WHITE);
-#endif // I2CLCD
-  }
-  void LcdPrint(const char *s) {
-#ifdef I2CLCD_WAVESHARE
-    m_Lcd.send_string(s);
-#else
-    m_Lcd.print(s);
-#endif
-  }
-  void LcdPrint_P(PGM_P s);
-  void LcdPrint(int y,const char *s);
-  void LcdPrint_P(int y,PGM_P s);
-  void LcdPrint(int x,int y,const char *s);
-  void LcdPrint_P(int x,int y,PGM_P s);
-  void LcdPrint(int i) {
-    m_Lcd.print(i);
-  }
-  void LcdSetCursor(int x,int y) {
-    m_Lcd.setCursor(x,y);
-  }
-  void LcdClearLine(int y) {
-    m_Lcd.setCursor(0,y);
-    for (uint8_t i=0;i < LCD_MAX_CHARS_PER_LINE;i++) {
-      m_Lcd.write(' ');
-    }
-    m_Lcd.setCursor(0,y);
-  }
-  void LcdClear() {
-    m_Lcd.clear();
-  }
-  void LcdWrite(uint8_t data) {
-    m_Lcd.write(data);
-  }
-  void LcdMsg(const char *l1,const char *l2);
-  void LcdMsg_P(PGM_P l1,PGM_P l2);
-  void LcdSetBacklightType(uint8_t t,uint8_t update=OBD_UPD_FORCE) { // BKL_TYPE_XXX
-#ifdef RGBLCD
-    if (t == BKL_TYPE_RGB) m_bFlags &= ~OBDF_MONO_BACKLIGHT;
-    else m_bFlags |= OBDF_MONO_BACKLIGHT;
-    Update(update);
-#endif // RGBLCD
-  }
-  uint8_t IsLcdBacklightMono() {
-#ifdef RGBLCD
-    return (m_bFlags & OBDF_MONO_BACKLIGHT) ? 1 : 0;
-#else
-    return 1;
-#endif // RGBLCD
-  }
-  void LcdSetBacklightColor(uint8_t c) {
-#ifdef I2CLCD_WAVESHARE
-  switch (c)
-  {
-  case RED: m_Lcd.setRGB(255, 0, 0); break;
-  case GREEN: m_Lcd.setRGB(0, 255, 0); break;
-  case BLUE: m_Lcd.setRGB(0, 0, 255); break;
-  case YELLOW: m_Lcd.setRGB(255, 255, 0); break;
-  case TEAL: m_Lcd.setRGB(0, 128, 128); break;
-  case VIOLET: m_Lcd.setRGB(148, 0, 211); break;
-  case WHITE: m_Lcd.setRGB(255, 255, 255); break;
-  default:  m_Lcd.setColorWhite(); break;
-  }
-#endif
-#ifdef RGBLCD
-    if (IsLcdBacklightMono()) {
-      if (c) c = WHITE;
-    }
-    m_Lcd.setBacklight(c);
-#endif // RGBLCD
-  }
-#ifdef RGBLCD
-  uint8_t readButtons() { return m_Lcd.readButtons(); }
-#endif // RGBLCD
-#endif // LCD16X2
-
-#ifdef AMMETER
-  void SetAmmeterDirty(uint8_t tf) {
-    if (tf) m_bFlags |= OBDF_AMMETER_DIRTY;
-    else m_bFlags &= ~OBDF_AMMETER_DIRTY;
-  }
-  int8_t AmmeterIsDirty() { return (m_bFlags & OBDF_AMMETER_DIRTY) ? 1 : 0; }
-#endif // AMMETER
-
-  void DisableUpdate(int8_t on) {
-    if (on) m_bFlags |= OBDF_UPDATE_DISABLED;
-    else m_bFlags &= ~OBDF_UPDATE_DISABLED;
-  }
-  int8_t UpdatesDisabled() { return (m_bFlags & OBDF_UPDATE_DISABLED) ? 1 : 0; }
-  void Update(int8_t updmode=OBD_UPD_NORMAL); // OBD_UPD_xxx
-};
+void UpdateDisplay(int8_t updmode = OBD_UPD_NORMAL);
 
 #ifdef GFI
 #include "Gfi.h"
@@ -1209,7 +1010,6 @@ public:
   Menu *Select();
 };
 
-#ifdef RGBLCD
 class BklTypeMenu : public Menu {
 public:
   BklTypeMenu();
@@ -1217,7 +1017,6 @@ public:
   void Next();
   Menu *Select();
 };
-#endif // RGBLCD
 
 #if defined(DELAYTIMER)
 class RTCMenu : public Menu {
@@ -1445,7 +1244,6 @@ extern DelayTimer g_DelayTimer;
 extern BtnHandler g_BtnHandler;
 extern SettingsMenu g_SettingsMenu;
 #endif // BTN_MENU
-extern OnboardDisplay g_OBD;
 extern char g_sTmp[TMP_BUF_SIZE];
 
 #ifdef KWH_RECORDING

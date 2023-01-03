@@ -19,6 +19,7 @@
  * Boston, MA 02111-1307, USA.
  */
 #include "open_evse.h"
+#include "OnboardDisplay.h"
 
 #ifdef FT_ENDURANCE
 int g_CycleCnt = -1;
@@ -185,7 +186,7 @@ void J1772EVSEController::AuthLock(uint8_t tf,uint8_t update)
       Update(1);
     else
       Update(0);
-    g_OBD.Update(OBD_UPD_FORCE);
+    UpdateDisplay(OBD_UPD_FORCE);
   }
 }
 #endif // AUTH_LOCK
@@ -355,7 +356,7 @@ void J1772EVSEController::chargingOff()
 void J1772EVSEController::HardFault(int8_t recoverable)
 {
   SetHardFault();
-  g_OBD.Update(OBD_UPD_HARDFAULT);
+  UpdateDisplay(OBD_UPD_HARDFAULT);
 #ifdef RAPI
   RapiSendEvseState();
 #endif
@@ -501,18 +502,17 @@ void J1772EVSEController::EnableSerDbg(uint8_t tf)
   SaveEvseFlags();
 }
 
-#ifdef RGBLCD
-int J1772EVSEController::SetBacklightType(uint8_t t,uint8_t update)
+int J1772EVSEController::SetBacklightType(uint8_t t)
 {
-#ifdef RGBLCD
-  g_OBD.LcdSetBacklightType(t,update);
-  if (t == BKL_TYPE_MONO) m_wFlags |= ECF_MONO_LCD;
+  g_OBD.LcdSetBacklightType(t);
+  UpdateDisplay(OBD_UPD_FORCE);
+
+  if (t == BackliteType::MONO) m_wFlags |= ECF_MONO_LCD;
   else m_wFlags &= ~ECF_MONO_LCD;
   SaveEvseFlags();
-#endif // RGBLCD
   return 0;
 }
-#endif // RGBLCD
+
 void J1772EVSEController::Enable()
 {
   if ((m_EvseState == EVSE_STATE_DISABLED)||
@@ -543,7 +543,7 @@ void J1772EVSEController::Disable()
     if (!MennekesIsManual()) m_MennekesLock.Unlock(1);
 #endif // MENNEKES_LOCK
 
-    g_OBD.Update(OBD_UPD_FORCE);
+    UpdateDisplay(OBD_UPD_FORCE);
 #ifdef RAPI
     RapiSendEvseState();
 #endif // RAPI
@@ -565,7 +565,7 @@ void J1772EVSEController::Sleep()
     // when to open the contacts in Update()
     m_ChargeOffTimeMS = millis();
 
-    g_OBD.Update(OBD_UPD_FORCE);
+    UpdateDisplay(OBD_UPD_FORCE);
 
 #ifdef RAPI
     RapiSendEvseState();
@@ -598,7 +598,7 @@ void J1772EVSEController::SetSvcLevel(uint8_t svclvl,uint8_t updatelcd)
   SetCurrentCapacity(ampacity,0,1);
 
   if (updatelcd) {
-    g_OBD.Update(OBD_UPD_FORCE);
+    UpdateDisplay(OBD_UPD_FORCE);
   }
 }
 
@@ -683,9 +683,7 @@ uint8_t J1772EVSEController::doPost()
   m_Pilot.SetState(PILOT_STATE::P12); //check to see if EV is plugged in
 
   g_OBD.SetRedLed(1);
-#ifdef LCD16X2 //Adafruit RGB LCD
   g_OBD.LcdMsg_P(g_psPwrOn,g_psSelfTest);
-#endif //Adafruit RGB LCD
 
 #ifdef AUTOSVCLEVEL
   if (AutoSvcLevelEnabled()) {
@@ -841,7 +839,7 @@ uint8_t J1772EVSEController::doPost()
       if (svcState == L1) g_OBD.LcdMsg_P(g_psAutoDetect,g_psLevel1);
       if (svcState == L2) g_OBD.LcdMsg_P(g_psAutoDetect,g_psLevel2);
       if ((svcState == OG) || (svcState == SR))  {
-	g_OBD.LcdSetBacklightColor(RED);
+	      g_OBD.LcdSetBacklightColor(RED);
       }
       if (svcState == OG) g_OBD.LcdMsg_P(g_psTestFailed,g_psNoGround);
       if (svcState == SR) g_OBD.LcdMsg_P(g_psTestFailed,g_psStuckRelay);
@@ -889,9 +887,7 @@ uint8_t J1772EVSEController::doPost()
 #endif
 
   if ((svcState == OG)||(svcState == SR)||(svcState == FG)) {
-#ifdef LCD16X2
     g_OBD.LcdSetBacklightColor(RED);
-#endif // LCD16X2
     g_OBD.SetGreenLed(0);
     g_OBD.SetRedLed(1);
   }
@@ -937,11 +933,9 @@ void J1772EVSEController::Init()
   // read settings from EEPROM
   uint16_t rflgs = eeprom_read_word((uint16_t*)EOFS_FLAGS);
 
-#ifdef RGBLCD
   if ((rflgs != 0xffff) && (rflgs & ECF_MONO_LCD)) {
-    g_OBD.LcdSetBacklightType(BKL_TYPE_MONO);
+    g_OBD.LcdSetBacklightType(BackliteType::MONO);
   }
-#endif // RGBLCD
 
 #ifdef RELAY_PWM
   m_relayCloseMs = eeprom_read_byte((uint8_t*)EOFS_RELAY_CLOSE_MS);
@@ -1007,11 +1001,9 @@ void J1772EVSEController::Init()
 
   if (rflgs == 0xffff) { // uninitialized EEPROM
     m_wFlags = ECF_DEFAULT;
-#ifdef RGBLCD
-    if (DEFAULT_LCD_BKL_TYPE == BKL_TYPE_MONO) {
+    if (DEFAULT_LCD_BKL_TYPE == BackliteType::MONO) {
       m_wFlags |= ECF_MONO_LCD;
     }
-#endif // RGBLCD
   }
   else {
     m_wFlags = rflgs;
@@ -1073,10 +1065,7 @@ void J1772EVSEController::Init()
   }
 #endif // VOLTMETER
 
-#ifndef RGBLCD
   m_wFlags |= ECF_MONO_LCD;
-#endif
-
   m_wVFlags = ECVF_DEFAULT;
 
   m_MaxHwCurrentCapacity = eeprom_read_byte((uint8_t*)EOFS_MAX_HW_CURRENT_CAPACITY);
@@ -1298,7 +1287,7 @@ void J1772EVSEController::Update(uint8_t forcetransition)
 	  g_DelayTimer.ClrManualOverride();
       }
 #endif // DELAYTIMER
-	g_OBD.Update(OBD_UPD_FORCE);
+	UpdateDisplay(OBD_UPD_FORCE);
 #ifdef RAPI
 	RapiSendEvseState();
 #endif // RAPI	
@@ -1610,7 +1599,7 @@ if (TempChkEnabled()) {
 
     if (locked != AuthLockIsOn()) {
       AuthLock(locked,0);
-      g_OBD.Update(OBD_UPD_FORCE);
+      UpdateDisplay(OBD_UPD_FORCE);
       forcetransition = 1;
     }
   }
@@ -1774,7 +1763,7 @@ if (TempChkEnabled()) {
 #ifdef AUTH_LOCK
   if ((m_EvseState != prevevsestate) ||
       (m_PilotState != prevpilotstate)) {
-    g_OBD.Update(OBD_UPD_FORCE);
+    UpdateDisplay(OBD_UPD_FORCE);
   }
 #endif // AUTH_LOCK
 
@@ -2055,7 +2044,7 @@ int J1772EVSEController::SetCurrentCapacity(uint8_t amps,uint8_t updatelcd,uint8
   }
 
   if (updatelcd) {
-    g_OBD.Update(OBD_UPD_FORCE);
+    UpdateDisplay(OBD_UPD_FORCE);
   }
 
   return rc;

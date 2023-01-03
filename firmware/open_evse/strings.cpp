@@ -31,9 +31,7 @@ const char g_psSvcLevel[] PROGMEM = STR_SERVICE_LEVEL;
 const char g_psMaxCurrent[] PROGMEM = STR_MAX_CURRENT;
 const char g_psDiodeCheck[] PROGMEM = STR_DIODE_CHECK;
 const char g_psVentReqChk[] PROGMEM = STR_VENT_REQD_CHECK;
-#ifdef RGBLCD
 const char g_psBklType[] PROGMEM = STR_BACKLIGHT_TYPE;
-#endif
 #ifdef ADVPWR
 const char g_psGndChk[] PROGMEM = STR_GROUND_CHECK;
 const char g_psRlyChk[] PROGMEM = STR_STUCK_RELAY_CHK;
@@ -72,9 +70,7 @@ const char g_psChargeLimit[] PROGMEM = STR_CHARGE_LIMIT;
 #ifdef TIME_LIMIT
 const char g_psTimeLimit[] PROGMEM = STR_TIME_LIMIT;
 #endif // TIME_LIMIT
-#ifdef RGBLCD
 const char *g_BklMenuItems[] = STR_RGB_MONOCHROME;
-#endif // RGBLCD
 #endif // BTN_MENU
 
 #ifdef LCD16X2

@@ -435,9 +435,7 @@ int GetHearbeatTrigger();
     return (m_wFlags & ECF_SERIAL_DBG) ? 1 : 0;
   }
   void EnableSerDbg(uint8_t tf);
-#ifdef RGBLCD
-  int SetBacklightType(uint8_t t,uint8_t update=1); // BKL_TYPE_XXX
-#endif // RGBLCD
+  int SetBacklightType(uint8_t t); // BKL_TYPE_XXX
 
 #ifdef VOLTMETER
   uint16_t GetVoltScaleFactor() { return m_VoltScaleFactor; }

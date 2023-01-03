@@ -98,8 +98,8 @@ commands
 
 
 F0 {1|0}- enable/disable display updates
-     enables/disables g_OBD.Update()
- $F0 1^43 - enable display updates and call g_OBD.Update()
+     enables/disables UpdateDisplay()
+ $F0 1^43 - enable display updates and call UpdateDisplay()
  $F0 0^42 - disable display updates
 F1 - simulate front panel button short press
  N.B.: it is possible that an asynchronous state change will be sent by the

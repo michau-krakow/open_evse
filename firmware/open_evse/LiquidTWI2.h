@@ -17,16 +17,6 @@
 // code w/o an LCD installed, and not get hung in the write functions
 #define DETECT_DEVICE // enable device detection code
 
-// for setBacklight() with MCP23017
-#define OFF 0x0
-#define RED 0x1
-#define YELLOW 0x3
-#define GREEN 0x2
-#define TEAL 0x6
-#define BLUE 0x4
-#define VIOLET 0x5
-#define WHITE 0x7 
-
 // Standard directional button bits
 #define BUTTON_UP 0x08
 #define BUTTON_DOWN 0x04

@@ -271,25 +271,23 @@ int EvseRapiProcessor::processCmd()
     case '0': // enable/disable LCD update
       if (tokenCnt == 2) {
 	g_OBD.DisableUpdate((*tokens[1] == '0') ? 1 : 0);
-	if (*tokens[1] != '0') g_OBD.Update(OBD_UPD_FORCE);
+	if (*tokens[1] != '0') UpdateDisplay(OBD_UPD_FORCE);
 	rc = 0;
       }
       break;
  #ifdef BTN_MENU
     case '1': // simulate front panel short press
       g_BtnHandler.DoShortPress(g_EvseController.InFaultState());
-      g_OBD.Update(OBD_UPD_FORCE);
+      UpdateDisplay(OBD_UPD_FORCE);
       rc = 0;
       break;
 #endif // BTN_MENU
-#ifdef LCD16X2
     case 'B': // LCD backlight
       if (tokenCnt == 2) {
-	g_OBD.LcdSetBacklightColor(dtou32(tokens[1]));
-	rc = 0;
+      g_OBD.LcdSetBacklightColor(dtou32(tokens[1]));
+      rc = 0;
       }
       break;
-#endif // LCD16X2
     case 'D': // disable EVSE
       g_EvseController.Disable();
       rc = 0;
@@ -370,9 +368,7 @@ int EvseRapiProcessor::processCmd()
 #ifdef LCD16X2
     case '0': // set LCD type
       if (tokenCnt == 2) {
-#ifdef RGBLCD
-	rc = g_EvseController.SetBacklightType((*tokens[1] == '0') ? BKL_TYPE_MONO : BKL_TYPE_RGB);
-#endif // RGBLCD
+        rc = g_EvseController.SetBacklightType((*tokens[1] == '0') ? BackliteType::MONO : BackliteType::RGB);
       }
       break;
 #endif // LCD16X2
@@ -399,7 +395,7 @@ int EvseRapiProcessor::processCmd()
       if (tokenCnt == 2) {
 	if (g_EvseController.LimitsAllowed()) {
 	  g_EvseController.SetTimeLimit15(dtou32(tokens[1]));
-	  if (!g_OBD.UpdatesDisabled()) g_OBD.Update(OBD_UPD_FORCE);
+	  if (!g_OBD.UpdatesDisabled()) UpdateDisplay(OBD_UPD_FORCE);
 	  rc = 0;
 	}
       }
@@ -484,7 +480,7 @@ int EvseRapiProcessor::processCmd()
       if (tokenCnt == 2) {
 	if (g_EvseController.LimitsAllowed()) {
 	  g_EvseController.SetChargeLimitkWh(dtou32(tokens[1]));
-	  if (!g_OBD.UpdatesDisabled()) g_OBD.Update(OBD_UPD_FORCE);
+	  if (!g_OBD.UpdatesDisabled()) UpdateDisplay(OBD_UPD_FORCE);
 	  rc = 0;
 	}
       }
@@ -809,7 +805,7 @@ int EvseRapiProcessor::processCmd()
       if (tokenCnt == 2) {
 	g_EvseController.SetChargingCurrent(dtou32(tokens[1])*1000);
 	g_OBD.SetAmmeterDirty(1);
-	g_OBD.Update(OBD_UPD_FORCE);
+	UpdateDisplay(OBD_UPD_FORCE);
 	rc = 0;
       }
       break;
