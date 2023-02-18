@@ -65,12 +65,13 @@ void J1772EVSEController::readAmmeter()
   uint8_t is_first_sample = 1;
   uint16_t last_sample;
   unsigned int sample_count = 0;
+
   for(unsigned long start = millis(); ((now_ms = millis()) - start) < CURRENT_SAMPLE_INTERVAL; ) {
     // the A/d is 0 to 1023.
-    uint16_t sample = adcCurrent.read();
+    int16_t sample = adcCurrent.read() - 512;
     // If this isn't the first sample, and if the sign of the value differs from the
     // sign of the previous value, then count that as a zero crossing.
-    if (!is_first_sample && ((last_sample > 512) != (sample > 512))) {
+    if (!is_first_sample && ((last_sample > 0) != (sample > 0))) {
       // Once we've seen a zero crossing, don't look for one for a little bit.
       // It's possible that a little noise near zero could cause a two-sample
       // inversion.
@@ -87,7 +88,7 @@ void J1772EVSEController::readAmmeter()
     case 1:
     case 2:
       // Gather the sum-of-the-squares and count how many samples we've collected.
-      sum += (unsigned long)(((long)sample - 512) * ((long)sample - 512));
+      sum += (unsigned long)(((long)sample) * ((long)sample));
       sample_count++;
       continue;
     case 3:
