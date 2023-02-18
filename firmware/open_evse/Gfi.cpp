@@ -70,12 +70,17 @@ uint8_t Gfi::SelfTest()
 {
   int i;
   // wait for GFI pin to clear
-  for (i=0;i < 20;i++) {
+  for (i = 100; i > 0;i--) {
     WDT_RESET();
     if (!pin.read()) break;
     delay(50);
   }
-  if (i == 20) return 2;
+  if (i == 0) {
+#if defined(SERDBG)
+    Serial.println("GFI SelfTest init condition failed: test pin not in low state");
+#endif
+    return 2;
+  }
 
   testInProgress = 1;
   testSuccess = 0;
@@ -86,13 +91,24 @@ uint8_t Gfi::SelfTest()
     delayMicroseconds(GFI_PULSE_OFF_US);
   }
 
+#if defined(SERDBG)
+  if (!testSuccess) {
+    Serial.print("GFI Selftest: unsuccessfull, no GFCI detected");
+  }
+#endif
+
   // wait for GFI pin to clear
-  for (i=0;i < 40;i++) {
+  for (i = 100;i > 0; i--) {
     WDT_RESET();
     if (!pin.read()) break;
     delay(50);
   }
-  if (i == 40) return 3;
+  if (i == 0) {
+#if defined(SERDBG)
+    Serial.print("GFI SelfTest: post-check condition failed - pin not returning to LOW state");
+#endif
+    return 3;
+  }
 
 #ifndef OPENEVSE_2
   // sometimes getting spurious GFI faults when testing just before closing
