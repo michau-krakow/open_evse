@@ -229,7 +229,7 @@ void J1772EVSEController::ShowDisabledTests()
 		  ECF_GND_CHK_DISABLED|
 		  ECF_STUCK_RELAY_CHK_DISABLED|
 		  ECF_GFI_TEST_DISABLED|
-                  ECF_TEMP_CHK_DISABLED)) {
+      ECF_TEMP_CHK_DISABLED)) {
 #ifdef LCD16X2
     g_OBD.LcdSetBacklightColor(YELLOW);
 #endif // #ifdef LCD16X2
@@ -705,9 +705,8 @@ uint8_t J1772EVSEController::doPost()
 #ifdef LCD16X2
     g_OBD.LcdMsg_P(g_psAutoDetect,(svcState == L2) ? g_psLevel2 : g_psLevel1);
 #endif //LCD16x2
-    
+
 #else //!OPENEVSE_2
-    
     delay(150); // delay reading for stable pilot before reading
     int reading = adcPilot.read(); //read pilot
 #ifdef SERDBG
@@ -717,6 +716,7 @@ uint8_t J1772EVSEController::doPost()
 #endif //#ifdef SERDBG
     
     m_Pilot.SetState(PILOT_STATE_N12);
+
     if (reading >= m_ThreshData.m_ThreshAB) {  // IF EV is not connected its Okay to open the relay the do the L1/L2 and ground Check
       
       // save state with both relays off - for stuck relay state
@@ -725,12 +725,12 @@ uint8_t J1772EVSEController::doPost()
       // save state with Relay 1 on 
 #ifdef OEV6
       if (isV6()) {
-	digitalWrite(V6_CHARGING_PIN,HIGH);
+        digitalWrite(V6_CHARGING_PIN, HIGH);
       }
       else { // !V6
 #endif // OEV6
 #ifdef CHARGING_REG
-	pinCharging.write(1);
+        pinCharging.write(1);
 #endif
 #ifdef OEV6
       }
@@ -744,12 +744,12 @@ uint8_t J1772EVSEController::doPost()
 
 #ifdef OEV6
       if (isV6()) {
-	digitalWrite(V6_CHARGING_PIN,LOW);
+        digitalWrite(V6_CHARGING_PIN, LOW);
       }
       else { // !V6
 #endif // OEV6
 #ifdef CHARGING_REG
-	pinCharging.write(0);
+        pinCharging.write(0);
 #endif
 #ifdef OEV6
       }
@@ -759,16 +759,16 @@ uint8_t J1772EVSEController::doPost()
 #endif
 
       delay(RelaySettlingTime); //allow relay to fully open before running other tests
-          
+
       // save state for Relay 2 on
 #ifdef OEV6
       if (isV6()) {
-	digitalWrite(V6_CHARGING_PIN2,HIGH);
+        digitalWrite(V6_CHARGING_PIN2, HIGH);
       }
       else { // !V6
 #endif // OEV6
 #ifdef CHARGING2_REG
-	pinCharging2.write(1); 
+        pinCharging2.write(1);
 #endif
 #ifdef OEV6
       }
@@ -779,59 +779,59 @@ uint8_t J1772EVSEController::doPost()
 
 #ifdef OEV6
       if (isV6()) {
-	digitalWrite(V6_CHARGING_PIN2,LOW);
+        digitalWrite(V6_CHARGING_PIN2, LOW);
       }
       else { // !V6
 #endif // OEV6
 #ifdef CHARGING2_REG
-	pinCharging2.write(0); 
+        pinCharging2.write(0);
 #endif
 #ifdef OEV6
       }
 #endif // OEV6
       delay(RelaySettlingTime); //allow relay to fully open before running other tests
-        
+
       // decide input power state based on the status read  on L1 and L2
       // either 2 SPST or 1 DPST relays can be configured
       // valid svcState is L1 - one hot, L2 both hot, OG - open ground both off, SR - stuck relay when shld be off
       //
       if (RelayOff == none) { // relay not stuck on when off
-	switch ( Relay1 ) {
-	case ( both ): //
-	  if ( Relay2 == none ) svcState = L2;
-	  if (StuckRelayChkEnabled()) {
-	    if ( Relay2 != none ) svcState = SR;
-	  }
-	  break;
-	case ( none ): //
-	  if (GndChkEnabled()) {
-	    if ( Relay2 == none ) svcState = OG;
-	  }
-	  if ( Relay2 == both ) svcState = L2;
-	  if ( Relay2 == L1 || Relay2 == L2 ) svcState = L1;
-	  break;
-	case ( L1on ): // L1 or L2
-	case ( L2on ):
-	  if (StuckRelayChkEnabled()) {
-	    if ( Relay2 != none ) svcState = SR;
-	  }
-	if ( Relay2 == none ) svcState = L1;
-	if ( (Relay1 == L1on) && (Relay2 == L2on)) svcState = L2;
-	if ( (Relay1 == L2on) && (Relay2 == L1on)) svcState = L2;
-	break;
-	} // end switch
+        switch ( Relay1 ) {
+        case ( both ): //
+          if ( Relay2 == none ) svcState = L2;
+          if (StuckRelayChkEnabled()) {
+            if ( Relay2 != none ) svcState = SR;
+          }
+          break;
+        case ( none ): //
+          if (GndChkEnabled()) {
+            if ( Relay2 == none ) svcState = OG;
+          }
+          if ( Relay2 == both ) svcState = L2;
+          if ( Relay2 == L1 || Relay2 == L2 ) svcState = L1;
+          break;
+        case ( L1on ): // L1 or L2
+        case ( L2on ):
+          if (StuckRelayChkEnabled()) {
+            if ( Relay2 != none ) svcState = SR;
+          }
+        if ( Relay2 == none ) svcState = L1;
+        if ( (Relay1 == L1on) && (Relay2 == L2on)) svcState = L2;
+        if ( (Relay1 == L2on) && (Relay2 == L1on)) svcState = L2;
+        break;
+        } // end switch
       }
       else { // Relay stuck on
-	if (StuckRelayChkEnabled()) {
-	  svcState = SR;
-	}
+        if (StuckRelayChkEnabled()) {
+          svcState = SR;
+        }
       }
 #ifdef SERDBG
       if (SerDbgEnabled()) {
-	Serial.print("RelayOff: ");Serial.println((int)RelayOff);
-	Serial.print("Relay1: ");Serial.println((int)Relay1);
-	Serial.print("Relay2: ");Serial.println((int)Relay2);
-	Serial.print("SvcState: ");Serial.println((int)svcState);
+        Serial.print("RelayOff: ");Serial.println((int)RelayOff);
+        Serial.print("Relay1: ");Serial.println((int)Relay1);
+        Serial.print("Relay2: ");Serial.println((int)Relay2);
+        Serial.print("SvcState: ");Serial.println((int)svcState);
       }
 #endif //#ifdef SERDBG
 
@@ -864,9 +864,9 @@ uint8_t J1772EVSEController::doPost()
       RelayOff = ReadACPins();
       if ((CGMIisEnabled() && !(RelayOff & RLY_TEST_PIN_OPEN)) ||
           (!CGMIisEnabled() && (RelayOff != ACPINS_OPEN))) {
-	svcState = SR;
+        svcState = SR;
 #ifdef LCD16X2
-	g_OBD.LcdMsg_P(g_psTestFailed,g_psStuckRelay);
+	      g_OBD.LcdMsg_P(g_psTestFailed,g_psStuckRelay);
 #endif // LCD16X2
       }
     }
@@ -1134,13 +1134,13 @@ void J1772EVSEController::Init()
       RapiSendEvseState(1);
 #endif
       while (1) { // spin forever
-	  ProcessInputs();
+    	  ProcessInputs();
       }
 #else // !UL_COMPLIANT
       unsigned long faultms = millis();
       // keep retrying POST every 2 minutes
       while ((millis() - faultms) < 2*60000ul) {
-	ProcessInputs();
+	      ProcessInputs();
       }
 #endif
     }
