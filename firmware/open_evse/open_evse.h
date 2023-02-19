@@ -87,7 +87,7 @@ typedef unsigned long time_t;
 
 // Enable three-phase energy calculation
 // Note: three-phase energy will always be calculated even if EV is only using singe-phase. Ony enable if always charging 3-phase EV and aware of this limitation.
-//#define THREEPHASE
+#define THREEPHASE
 
 // charging access control - if defined, enables RAPI G4/S4 commands
 //  to enable/disable charging function
@@ -99,7 +99,7 @@ typedef unsigned long time_t;
 //#define AUTH_LOCK 1
 
 // serial remote api
-#define RAPI
+// #define RAPI
 
 // RAPI over serial
 #define RAPI_SERIAL
@@ -130,7 +130,7 @@ typedef unsigned long time_t;
 #define CHARGE_LIMIT
 
 // support Mennekes (IEC 62196) type 2 locking pin
-#define MENNEKES_LOCK
+//#define MENNEKES_LOCK
 
 // Support for Nick Sayer's OpenEVSE II board, which has alternate hardware for ground check/stuck relay check and a voltmeter for L1/L2.
 //#define OPENEVSE_2
@@ -178,7 +178,7 @@ extern AutoCurrentCapacityController g_ACCController;
 //    disabled, will retry POST continuously until it passes
 // 2) if enabled, any a fault occurs immediately after charge is initiated,
 //    hard fault until power cycled. Otherwise, do the standard delay/retry sequence
-#define UL_COMPLIANT
+// #define UL_COMPLIANT
 
 #ifdef UL_COMPLIANT
 #define ADVPWR
@@ -188,7 +188,7 @@ extern AutoCurrentCapacityController g_ACCController;
 #define GFI_SELFTEST
 #endif //UL_COMPLIANT
 
-#define TEMPERATURE_MONITORING  // Temperature monitoring support
+// #define TEMPERATURE_MONITORING  // Temperature monitoring support
 
 #define HEARTBEAT_SUPERVISION // Heartbeat Supervision support
 
@@ -207,8 +207,8 @@ extern AutoCurrentCapacityController g_ACCController;
 #define MV_FOR_L1 120000L       // conventional for North America
 #endif
 #ifndef MV_FOR_L2
-#define MV_FOR_L2 240000L       // conventional for North America
-//  #define MV_FOR_L2 230000L   // conventional for most of the world
+// #define MV_FOR_L2 240000L       // conventional for North America
+#define MV_FOR_L2 230000L       // conventional for most of the world
 #endif
 
 // kWh Recording feature depends upon #AMMETER support
@@ -353,7 +353,7 @@ extern AutoCurrentCapacityController g_ACCController;
 #endif
 
 // for testing print various diagnostic messages to the UART
-//#define SERDBG
+#define SERDBG
 
 //
 // begin functional tests
@@ -417,10 +417,10 @@ extern AutoCurrentCapacityController g_ACCController;
 
 // current capacity in amps
 #ifndef DEFAULT_CURRENT_CAPACITY_L1
-#define DEFAULT_CURRENT_CAPACITY_L1 12
+#define DEFAULT_CURRENT_CAPACITY_L1 10
 #endif
 #ifndef DEFAULT_CURRENT_CAPACITY_L2
-#define DEFAULT_CURRENT_CAPACITY_L2 24
+#define DEFAULT_CURRENT_CAPACITY_L2 12
 #endif
 
 // minimum allowable current in amps
@@ -430,53 +430,54 @@ extern AutoCurrentCapacityController g_ACCController;
 
 // maximum allowable current in amps
 #ifndef MAX_CURRENT_CAPACITY_L1
-#define MAX_CURRENT_CAPACITY_L1 24 // J1772 Max for L1 on a 20A circuit = 16, 15A circuit = 12 Some Vehicles suppoty 24A on 30A RV outlet TT-30
+#define MAX_CURRENT_CAPACITY_L1 16 // J1772 Max for L1 on a 20A circuit = 16, 15A circuit = 12 Some Vehicles suppoty 24A on 30A RV outlet TT-30
 #endif
 #ifndef MAX_CURRENT_CAPACITY_L2
-#define MAX_CURRENT_CAPACITY_L2 80 // J1772 Max for L2 = 80
+#define MAX_CURRENT_CAPACITY_L2 32 // J1772 Max for L2 = 80
 #endif
 
 //J1772EVSEController
 
-#define CURRENT_PIN 0 // analog current reading pin ADCx
-#define PILOT_PIN 1 // analog pilot voltage reading pin ADCx
-#define PP_PIN 2 // PP_READ - ADC2
+#define CURRENT_PIN   0 // analog current reading pin ADC0
+#define PILOT_PIN     1 // analog pilot voltage reading pin ADC1
+#define PP_PIN        2 // PP_READ - ADC2
 #ifdef VOLTMETER
 // N.B. Note, ADC2 is already used as PP_PIN so beware of potential clashes
 // voltmeter pin is ADC2 on OPENEVSE_2
 #define VOLTMETER_PIN 2 // analog AC Line voltage voltmeter pin ADCx
 #endif // VOLTMETER
+
 #ifdef OPENEVSE_2
 // This pin must match the last write to CHARGING_PIN, modulo a delay. If
 // it is low when CHARGING_PIN is high, that's a missing ground.
 // If it's high when CHARGING_PIN is low, that's a stuck relay.
 // Auto L1/L2 is done with the voltmeter.
-#define ACLINE1_REG &PIND // OpenEVSE II has only one AC test pin.
-#define ACLINE1_IDX 3
+#define ACLINE1_REG &PINB // OpenEVSE II has only one AC test pin.
+#define ACLINE1_IDX 7
 
-#define CHARGING_REG &PIND // OpenEVSE II has just one relay pin.
-#define CHARGING_IDX 7 // OpenEVSE II has just one relay pin.
+#define CHARGING_REG &PINB // OpenEVSE II has just one relay pin.
+#define CHARGING_IDX 6 // OpenEVSE II has just one relay pin.
 #else // !OPENEVSE_2
 
  // TEST PIN 1 for L1/L2, ground and stuck relay
-#define ACLINE1_REG &PIND
-#define ACLINE1_IDX 3
+#define ACLINE1_REG &PINB
+#define ACLINE1_IDX 6
  // TEST PIN 2 for L1/L2, ground and stuck relay
-#define ACLINE2_REG &PIND
-#define ACLINE2_IDX 4
+#define ACLINE2_REG &PINB
+#define ACLINE2_IDX 7
 
 #define V6_CHARGING_PIN  5
 #define V6_CHARGING_PIN2 6
 
 // digital Relay trigger pin
-#define CHARGING_REG &PINB
-#define CHARGING_IDX 0
+#define CHARGING_REG &PINH
+#define CHARGING_IDX 3
 // digital Relay trigger pin for second relay
-#define CHARGING2_REG &PIND
-#define CHARGING2_IDX 7
+#define CHARGING2_REG &PINE
+#define CHARGING2_IDX 4
 //digital Charging pin for AC relay
 #define CHARGINGAC_REG &PINB
-#define CHARGINGAC_IDX 1
+#define CHARGINGAC_IDX 5
 
 // obsolete LED pin
 //#define RED_LED_REG &PIND
@@ -494,11 +495,11 @@ extern AutoCurrentCapacityController g_ACCController;
 // when not defined, use fast PWM mode -> 1/250 resolution
 #define PAFC_PWM
 // see microcontroller datasheet for details.
-#define PILOT_TIMER_ID    1
-#define PILOT_OC_CHANNEL  'B'
-#define PILOT_DDR         DDRB
-#define PILOT_REG         &PINB
-#define PILOT_PWM_PIN     2
+#define PILOT_TIMER_ID    3
+#define PILOT_OC_CHANNEL  'A'
+#define PILOT_DDR         DDRE
+#define PILOT_REG         &PINE
+#define PILOT_PWM_PIN     3
 
 #ifdef MENNEKES_LOCK
 // requires external 12V H-bridge driver such as Polulu 1451
@@ -579,7 +580,7 @@ extern AutoCurrentCapacityController g_ACCController;
 // for ADVPWR
 #define GROUND_CHK_DELAY  1000 // delay after charging started to test, ms
 #define STUCK_RELAY_DELAY 1000 // delay after charging opened to test, ms
-#define RelaySettlingTime  250 // time for relay to settle in post, ms
+#define RelaySettlingTime  100 // time for relay to settle in post, ms
 
 // ACPINS sample interval - max number of ms to sample
 // used only when ADVPWR - for rectified MID400 chips which block
@@ -592,18 +593,17 @@ extern AutoCurrentCapacityController g_ACCController;
 #define V6_ID_IDX 7
 
 #ifdef GFI
-#define GFI_INTERRUPT 0 // interrupt number 0 = PD2, 1 = PD3
-// interrupt number 0 = PD2, 1 = PD3
-#define GFI_REG &PIND
-#define GFI_IDX 2
+#define GFI_INTERRUPT 1 // interrupt number 0 = PD0, 1 = PD1, 2 = PD2, 3 = PD3
+#define GFI_REG &PINE
+#define GFI_IDX 5
 
 #ifdef GFI_SELFTEST
 // pin is supposed to be wrapped around the GFI CT 5+ times
-#define GFITEST_REG &PIND
-#define GFITEST_IDX 6
+#define GFITEST_REG &PINH
+#define GFITEST_IDX 5
 // V6 GFI test pin PB0
-#define V6_GFITEST_REG &PINB
-#define V6_GFITEST_IDX 0
+#define V6_GFITEST_REG &PINH
+#define V6_GFITEST_IDX 5
 
 
 
@@ -670,7 +670,7 @@ extern AutoCurrentCapacityController g_ACCController;
 #ifdef OPENEVSE_2
 #define DEFAULT_CURRENT_SCALE_FACTOR 186   // OpenEVSE II with a 27 Ohm burden resistor, after a 2-point calibration at 12.5A and 50A
 #else
-#define DEFAULT_CURRENT_SCALE_FACTOR 220   // OpenEVSE v2.5 and v3 with a 22 Ohm burden resistor (note that the schematic may say 28 Ohms by mistake)
+#define DEFAULT_CURRENT_SCALE_FACTOR 122   // OpenEVSE v2.5 and v3 with a 22 Ohm burden resistor (note that the schematic may say 28 Ohms by mistake)
 #endif
 
 // subtract this from ammeter current reading to correct zero offset
